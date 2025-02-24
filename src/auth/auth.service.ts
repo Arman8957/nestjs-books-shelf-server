@@ -1,37 +1,54 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
-import { PrismaService } from 'prisma/prisma.service';
+
 import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
+import { CreateUserDto, LoginDto } from './dto/auth.dto';
+import { PrismaService } from 'prisma/prisma.service';
 
 @Injectable()
 export class AuthService {
   constructor(private prisma: PrismaService, private jwtService: JwtService) {}
 
-  async signup(data: any) {
-    
-    const { fullName, phoneNumber, password, favouriteGenre, profileImage, education, referredBy } = data;
+  async signup(data: CreateUserDto) {
+    const { fullName, email, phoneNumber, password, favouriteGenre, education, referredBy } = data;
 
-    const existingUser = await this.prisma.user.findFirst({ where: { phoneNumber } });
-    if (existingUser) throw new BadRequestException('Phone number already exists');
+    // Check if email is already registered
+    const existingUser = await this.prisma.user.findUnique({ where: { email } });
+    if (existingUser) throw new BadRequestException('Email already exists');
 
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user
     const user = await this.prisma.user.create({
-      data: { fullName, phoneNumber, password: hashedPassword, favouriteGenre, profileImage, education, referredBy },
+      data: {
+        fullName,
+        email,
+        phoneNumber,
+        password: hashedPassword,
+        favouriteGenre,
+        education,
+        referredBy,
+      },
     });
 
     return { message: 'User registered successfully', userId: user.id };
   }
 
-  async login(data: any) {
-    const { phoneNumber, password } = data;
+  async login(data: LoginDto) {
+    const { email, password } = data;
 
-    const user = await this.prisma.user.findFirst({ where: { phoneNumber } });
+    // Find user by email
+    const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) throw new NotFoundException('User not found');
 
+    // Validate password
     const passwordMatch = await bcrypt.compare(password, user.password);
     if (!passwordMatch) throw new BadRequestException('Invalid credentials');
 
-    const token = this.jwtService.sign({ userId: user.id });
+    // Generate JWT
+    const token = this.jwtService.sign({ userId: user.id, role: user.role });
+
     return { message: 'Login successful', token };
   }
 }

@@ -6,16 +6,16 @@ import { UserService } from './users.service';
 export class UserController {
     constructor(private userService: UserService ) {}
      @Get(':id') 
-     async getUser(@Param('id') id: string) {
+     async getUser(@Param('id') id: number, @Body() body: any) {
         return this.userService.getUserById(id);
      }
 
      @Put(':id')
-     async updateUser(@Param('id') id: string, @Body() body: any) {
+     async updateUser(@Param('id') id: number, @Body() body: any) {
         return this.userService.updateUser(id, body);
      }
      @Delete(':id') 
-     async deleteUser(@Param('id') id: string, @Body() body: any) {
+     async deleteUser(@Param('id') id: number, @Body() body: any) {
         return this.userService.deleteUser(id, body);
 
      }

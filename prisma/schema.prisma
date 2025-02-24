@@ -15,14 +15,61 @@ datasource db {
 
 
 model User {
-  id             String @id @default(uuid())
+  id             Int @id @default(autoincrement())
   fullName       String
-  phoneNumber    String @unique
+  email          String @unique
+  phoneNumber    String? 
   password       String
   favouriteGenre String?
-  profileImage   String?
+  profile        Profile?
   education      String?
+  role           Role    @default(USER)
+  posts          PostEBook[]
   referredBy     String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
+  @@index([fullName, id])
 }
+
+
+model Profile {
+  id       Int    @id @default(autoincrement())
+  email    String @unique
+  bio      String
+  imageUrl String
+  user     User   @relation(fields: [userId], references: [id])
+  userId   Int    @unique
+ 
+  @@index([id])
+}
+
+
+model PostEBook{
+  id         Int        @id @default(autoincrement())
+  writerName String
+  bookName   String
+  type       String  //"audio", "E-Book", "Hard Copy"
+  bookImage  String?
+  title      String?
+  published  Boolean    @default(false)
+  author     User       @relation(fields: [authorId], references: [id] )
+  authorId   Int
+  categories Category[]
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  @@index([id, title])
+}
+
+model Category {
+  id    Int    @id @default(autoincrement())
+  name  String
+  posts PostEBook[]
+}
+
+enum Role{
+  USER
+  ADMIN
+}
+
