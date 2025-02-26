@@ -9,31 +9,23 @@ import { PrismaService } from 'prisma/prisma.service';
 export class AuthService {
   constructor(private prisma: PrismaService, private jwtService: JwtService) {}
 
-  async signup(data: CreateUserDto) {
-    const { fullName, email, phoneNumber, password, favouriteGenre, education, referredBy } = data;
+  async signup(data: any) {
+    console.log("Signup service called with data:", data); // Log incoming request
 
-    // Check if email is already registered
+    const { fullName, email, password, role, favouriteGenre } = data;
+    
     const existingUser = await this.prisma.user.findUnique({ where: { email } });
     if (existingUser) throw new BadRequestException('Email already exists');
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create user
     const user = await this.prisma.user.create({
-      data: {
-        fullName,
-        email,
-        phoneNumber,
-        password: hashedPassword,
-        favouriteGenre,
-        education,
-        referredBy,
-      },
+      data: { fullName, email, password: hashedPassword, role, favouriteGenre },
     });
 
+    console.log("User created:", user); //  Log user creation
     return { message: 'User registered successfully', userId: user.id };
   }
+  
 
   async login(data: LoginDto) {
     const { email, password } = data;
